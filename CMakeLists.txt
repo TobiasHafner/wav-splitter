@@ -3,6 +3,9 @@ project(untitled C)
 
 set(CMAKE_C_STANDARD 11)
 
-add_executable(untitled main.c
-        wav-splitter.c
-        wav-splitter.h)
+add_executable(untitled "main.c"
+        "wav-header.c"
+        main.c
+        processing-utils.h
+        processing-utils.c
+)

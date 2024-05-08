@@ -1,21 +1,20 @@
 /**
- * @file wavsplitter.h
+ * @file wav-header.h
  * @brief WAV File Splitter
  *
- * This header file contains definitions and function prototypes for splitting
- * multi-channel WAV files into separate mono-channel WAV files.
+ * This header file contains the definition of a struct used to store the header data of a wav file.
  *
  * @author Tobias Hafner
- * @date 2024-05-06
+ * @date 2024-05-07
  */
 
-#ifndef WAV_SPLITTER_H
-#define WAV_SPLITTER_H
+#ifndef WAV_HEADER_H
+#define WAV_HEADER_H
 
 #include <stdint.h>
 #include <stdio.h>
 
-typedef struct WavHeader {
+typedef struct {
     char riff_header[4];      // "RIFF" identifier
     uint32_t wav_size;        // Size of the WAV portion minus 8 bytes
     char wave_header[4];      // "WAVE" identifier
@@ -29,18 +28,14 @@ typedef struct WavHeader {
     uint16_t bits_per_sample; // Bits per sample
     char data_header[4];      // "data" sub-chunk identifier
     uint32_t data_bytes;      // Number of bytes in data
-} wav_header;
+} WavHeader;
 
-int read_chunk_id(FILE *inputFile, char *chunkId);
+int read_header(FILE *inputFile, WavHeader *header);
 
-int read_chunk_size(FILE *inputFile, uint32_t *chunkSize);
+int write_header(FILE *outputFile, const WavHeader *header);
 
-int read_header(FILE *inputFile, struct WavHeader *header);
+// splitting operations
+int create_output_files(const WavHeader *inputHeader, const char* basePath, FILE ***outputFiles);
 
-int write_header(FILE *outputFile, const struct WavHeader *inputHeader);
-
-int create_output_files(const struct WavHeader* inputHeader, const char* inputFileName, FILE*** outputFiles);
-
-int split_wav_file(FILE *inputFile, const struct WavHeader* inputHeader, const char *inputFileName);
-
+int split_wav_file(FILE *inputFile, const WavHeader *inputHeader, const char *inputFileName);
 #endif
