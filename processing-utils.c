@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#define MAX_PATH_LENGTH 250
+
 #ifdef WIN32
 #include <windows.h>
 #define PATH_SEPARATOR '\\'
@@ -47,8 +49,9 @@ void _find_max_chunk_index(uint64_t *maxChunkIndex, const char *sessionPath) {
     char currentHexIndex[9] = {0};
 
 #ifdef WIN32
-    char searchPath[260];
+    char searchPath[MAX_PATH_LENGTH];
     snprintf(searchPath, sizeof(searchPath), "%s\\*.*", sessionPath);
+    searchPath[MAX_PATH_LENGTH - 1] = '\0';
 
     WIN32_FIND_DATA currentEntry;
     HANDLE directoryHandle = FindFirstFile(searchPath, &currentEntry);

@@ -4,6 +4,8 @@
 #include "wav-header.h"
 #include "processing-utils.h"
 
+#define MAX_PATH_LENGTH 250
+
 #ifdef WIN32
 #define PATH_SEPARATOR '\\'
 #else
@@ -33,7 +35,7 @@ int main(const int argc, char *argv[]) {
         fprintf(stderr, "ERROR: Memory allocation failed\n");
         exit(1);
     }
-    sprintf(outputPath, "%s%c%s%c", sessionPath, PATH_SEPARATOR, "out", PATH_SEPARATOR);
+    sprintf(outputPath, "%s%c%s%c\0", sessionPath, PATH_SEPARATOR, "out", PATH_SEPARATOR);
     _create_output_folder(outputPath);
 
     // find highest chunk index
@@ -48,8 +50,9 @@ int main(const int argc, char *argv[]) {
 
     for (uint64_t chunkIndex = 1; chunkIndex <= maxChunkIndex; chunkIndex++) {
         // build file path
-        char inputFilePath[260];
+        char inputFilePath[MAX_PATH_LENGTH];
         sprintf(inputFilePath, "%s%c%08llX.WAV", sessionPath, PATH_SEPARATOR, chunkIndex);
+        inputFilePath[MAX_PATH_LENGTH - 1] = '\0'; // we don't expect paths to be that long
 
         printf("Processing input file: %s\n", inputFilePath);
 
