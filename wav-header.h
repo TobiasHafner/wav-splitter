@@ -34,7 +34,6 @@ int read_header(FILE *inputFile, WavHeader *header);
 
 int write_header(FILE *outputFile, const WavHeader *header);
 
-// splitting operations
 int create_output_files(const WavHeader *inputHeader, const char* basePath, FILE ***outputFiles);
 
 int split_wav_file(FILE *inputFile, const WavHeader *inputHeader, const char *inputFileName);
