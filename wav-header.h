@@ -30,11 +30,11 @@ typedef struct {
     uint32_t data_bytes;      // Number of bytes in data
 } WavHeader;
 
-int read_header(FILE *inputFile, WavHeader *header);
+int read_header(FILE *inputFile_p, WavHeader *header_p);
 
-int write_header(FILE *outputFile, const WavHeader *header);
+int write_header(FILE *outputFile_p, const WavHeader *header_p);
 
-int create_output_files(const WavHeader *inputHeader, const char* basePath, FILE ***outputFiles);
+int create_output_files(const WavHeader *inputHeader_p, const char* basePath_p, FILE ***outputFiles_ppp);
 
-int split_wav_file(FILE *inputFile, const WavHeader *inputHeader, const char *inputFileName);
+int split_wav_file(FILE *inputFile_p, const WavHeader *inputHeader_p, const char *inputFileName_p);
 #endif

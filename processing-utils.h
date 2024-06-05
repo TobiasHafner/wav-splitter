@@ -1,3 +1,13 @@
+/**
+* @file processing-utils.h
+ * @brief Utils for processing wav files
+ *
+ * This header file contains the definition of a collectio of functions used to process multichannel wav files.
+ *
+ * @author Tobias Hafner
+ * @date 2024-05-07
+ */
+
 #ifndef PROCESSING_UTILS_H
 #define PROCESSING_UTILS_H
 

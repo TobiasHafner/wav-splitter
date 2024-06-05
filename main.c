@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -5,6 +6,9 @@
 #include "processing-utils.h"
 
 #define MAX_PATH_LENGTH 250
+
+// 4098 MB is enough to store around 7 minutes of 32 channel audio at 24 bit, 96 kHz
+#define TOTAL_BUFFER_SIZE_MB 4096
 
 #ifdef WIN32
 #define PATH_SEPARATOR '\\'
@@ -21,96 +25,135 @@ int main(const int argc, char *argv[]) {
     }
 
     // get session path and name
-    const char *sessionPath = argv[1];
-    const char *sessionName = strdup(argv[1]);
-    char *separator = strchr(sessionName, PATH_SEPARATOR);
+    const char *sessionPath_p = argv[1];
+    const char *sessionName_p = strdup(argv[1]);
+    char *separator_p = strchr(sessionName_p, PATH_SEPARATOR);
 
-    if (separator != NULL) {
-        *separator = '\0';
+    if (separator_p != NULL) {
+        *separator_p = '\0';
     }
 
     // create ouput folder
-    char *outputPath = malloc(strlen(sessionPath) + 7);
-    if (outputPath == NULL) {
+    char *outputPath_p = malloc(strlen(sessionPath_p) + 7);
+    if (outputPath_p == NULL) {
         fprintf(stderr, "ERROR: Memory allocation failed\n");
         exit(1);
     }
-    sprintf(outputPath, "%s%c%s%c\0", sessionPath, PATH_SEPARATOR, "out", PATH_SEPARATOR);
-    _create_output_folder(outputPath);
+    sprintf(outputPath_p, "%s%c%s%c\0", sessionPath_p, PATH_SEPARATOR, "out", PATH_SEPARATOR);
+    _create_output_folder(outputPath_p);
 
     // find highest chunk index
     uint64_t maxChunkIndex = 0;
-    _find_max_chunk_index(&maxChunkIndex, sessionPath);
+    _find_max_chunk_index(&maxChunkIndex, sessionPath_p);
 
     // explode each of the individual chunks into individual channels adn append to one file per channel
     WavHeader inputHeader;
 
-    FILE **outputFiles = NULL;
-    uint32_t *bytesWritten = NULL;
+    FILE **outputFiles_pp = NULL;
+    uint32_t *bytesWritten_p = NULL;
+
+    // prepare buffers
+    uint8_t **writeBuffers_pp = NULL;
+    size_t *bufferFillBytes_p = NULL;
+    size_t bufferSizeBytes = 0;
 
     for (uint64_t chunkIndex = 1; chunkIndex <= maxChunkIndex; chunkIndex++) {
         // build file path
         char inputFilePath[MAX_PATH_LENGTH];
-        sprintf(inputFilePath, "%s%c%08llX.WAV", sessionPath, PATH_SEPARATOR, chunkIndex);
+        sprintf(inputFilePath, "%s%c%08llX.WAV", sessionPath_p, PATH_SEPARATOR, chunkIndex);
         inputFilePath[MAX_PATH_LENGTH - 1] = '\0'; // we don't expect paths to be that long
 
         printf("Processing input file: %s\n", inputFilePath);
 
         // open file
-        FILE *inputFile = fopen(inputFilePath, "rb");
-        if (!inputFile) {
+        FILE *inputFile_p = fopen(inputFilePath, "rb");
+        if (!inputFile_p) {
             fprintf(stderr, "ERROR: Failed to open input file\n");
-            _cleanup(&outputFiles, inputHeader.num_channels, &bytesWritten);
+            _cleanup(&outputFiles_pp, inputHeader.num_channels, &bytesWritten_p);
             exit(-1);
         }
 
         // read header
-        if (read_header(inputFile, &inputHeader) != 0) {
+        if (read_header(inputFile_p, &inputHeader) != 0) {
             fprintf(stderr, "ERROR: Failed to read WAV header\n");
-            fclose(inputFile);
-            _cleanup(&outputFiles, inputHeader.num_channels, &bytesWritten);
+            fclose(inputFile_p);
+            _cleanup(&outputFiles_pp, inputHeader.num_channels, &bytesWritten_p);
             exit(1);
         }
 
-        // prepare output files
+        // prepare output files and buffers
         if (chunkIndex == 1) {
-            _init_output_files(inputFile, &outputFiles, &inputHeader, &bytesWritten, outputPath);
-            printf("Created output files for %d channels.\n", inputHeader.num_channels);
+            _init_output_files(inputFile_p, &outputFiles_pp, &inputHeader, &bytesWritten_p, outputPath_p);
+            printf("Created output files for %d channels\n", inputHeader.num_channels);
+
+            writeBuffers_pp = malloc(inputHeader.num_channels * sizeof(uint8_t *));
+            bufferFillBytes_p = malloc(inputHeader.num_channels * sizeof(size_t));
+            for (int i = 0; i < inputHeader.num_channels; i++) {
+                writeBuffers_pp[i] = malloc(bufferSizeBytes);
+                bufferFillBytes_p[i] = 0;
+                if (!writeBuffers_pp[i]) {
+                    fprintf(stderr, "ERROR: Failed to allocate write buffers\n");
+                    fclose(inputFile_p);
+                    _cleanup(&outputFiles_pp, inputHeader.num_channels, &bytesWritten_p);
+                    exit(1);
+                }
+            }
         }
 
-
         // prepare buffer for audio extraction
-        const size_t audio_buffer_size = inputHeader.block_align;
-        uint8_t *audio_buffer = malloc(audio_buffer_size);
-        if (!audio_buffer) {
-            fprintf(stderr, "ERROR: Failed to allocate output buffer\n");
-            fclose(inputFile);
-            _cleanup(&outputFiles, inputHeader.num_channels, &bytesWritten);
+        const size_t read_buffer_size = inputHeader.block_align;
+        uint8_t *read_buffer_p = malloc(read_buffer_size);
+        if (!read_buffer_p) {
+            fprintf(stderr, "ERROR: Failed to allocate read buffer\n");
+            fclose(inputFile_p);
+            _cleanup(&outputFiles_pp, inputHeader.num_channels, &bytesWritten_p);
             exit(1);
         }
 
         // extract audio
         const uint16_t bytesPerSample = inputHeader.bits_per_sample / 8;
-        while (fread(audio_buffer, audio_buffer_size, 1, inputFile) == 1) {
+        while (fread(read_buffer_p, read_buffer_size, 1, inputFile_p) == 1) {
             for (int i = 0; i < inputHeader.num_channels; i++) {
-                if (fwrite(audio_buffer + i * bytesPerSample, bytesPerSample, 1, outputFiles[i]) != 1) {
-                    fprintf(stderr, "Error writing data to channel %d\n", i + 1);
-                    _cleanup(&outputFiles, inputHeader.num_channels, &bytesWritten);
-                    exit(1);
+                memcpy(writeBuffers_pp[i] + bufferFillBytes_p[i], read_buffer_p + i * bytesPerSample, bytesPerSample);
+                bufferFillBytes_p[i] += bytesPerSample;
+
+                // if buffer is full, write to file
+                if (bufferFillBytes_p[i] >= bufferSizeBytes) {
+                    if (fwrite(writeBuffers_pp[i], bufferFillBytes_p[i], 1, outputFiles_pp[i]) != 1) {
+                        fprintf(stderr, "Error writing data to channel %d\n", i + 1);
+                        _cleanup(&outputFiles_pp, inputHeader.num_channels, &bytesWritten_p);
+                        exit(1);
+                    }
+                    bytesWritten_p[i] += bufferFillBytes_p[i];
+                    bufferFillBytes_p[i] = 0;
                 }
-                bytesWritten[i] += bytesPerSample;
             }
         }
 
-        free(audio_buffer);
-
-        fclose(inputFile);
+        free(read_buffer_p);
+        fclose(inputFile_p);
     }
 
+    // write remaining data from buffers to file
+    for (int i = 0; i < inputHeader.num_channels; i++) {
+        if (bufferFillBytes_p[i] > 0) {
+            if (fwrite(writeBuffers_pp[i], bufferFillBytes_p[i], 1, outputFiles_pp[i]) != 1) {
+                fprintf(stderr, "Error writing remaining data to channel %d\n", i + 1);
+                _cleanup(&outputFiles_pp, inputHeader.num_channels, &bytesWritten_p);
+                exit(1);
+            }
+            bytesWritten_p[i] += bufferFillBytes_p[i];
+        }
+        free(writeBuffers_pp[i]);
+    }
+
+    free(writeBuffers_pp);
+    free(bufferFillBytes_p);
+
     // update headers with correct file sizes after all data has been written
-    if (outputFiles) {
-        _rewrite_headers(&inputHeader, &bytesWritten, &outputFiles);
-        _cleanup(&outputFiles, inputHeader.num_channels, &bytesWritten);
+    if (outputFiles_pp) {
+        _rewrite_headers(&inputHeader, &bytesWritten_p, &outputFiles_pp);
+        _cleanup(&outputFiles_pp, inputHeader.num_channels, &bytesWritten_p);
     }
 
     printf("Header rewriting completed and files closed.\n");
