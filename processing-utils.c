@@ -10,6 +10,7 @@
 #define PATH_SEPARATOR '\\'
 #else
 #include <dirent.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #define PATH_SEPARATOR '/'
 #endif
@@ -37,8 +38,8 @@ void _create_output_folder(char *outputPath) {
         fprintf(stderr, "Directory already exists: %s\n", outputPath);
     }
 #else
-    if (mkdir(path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0) {
-        perror("Failed to create directory");
+    if (mkdir(outputPath, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0) {
+        perror("Failed to create output directory");
         exit(-1);
     }
 #endif
@@ -75,31 +76,36 @@ void _find_max_chunk_index(uint64_t *maxChunkIndex, const char *sessionPath) {
     } while (FindNextFile(directoryHandle, &currentEntry));
 
     FindClose(directoryHandle);
-
 #else
-    const char *dirPath = argv[1];
-    DIR *dir = opendir(dirPath);
-    if (dir == NULL) {
-        fprintf(stderr, "Failed to open the session directory.");
-        exit(1);
-    }
+    DIR *sessionDirectory = opendir(sessionPath);
 
     struct dirent *entry;
-    while ((entry = readdir(dir)) != NULL) {
-        if (!strstr(entry->d_name, ".WAV") && !strstr(entry->d_name, ".wav")) {
-            continue;
-        }
+    while ((entry = readdir(sessionDirectory)) != NULL) {
+      const char *filename = entry->d_name;
+      
+      size_t fileNameLength = strlen(filename);
+      if (fileNameLength < 4) {
+        continue;
+      }
+      if (strcasecmp(filename + fileNameLength - 4, ".wav") != 0) {
+        continue;
+      }
+      size_t hexIndexLength = fileNameLength - 4;
+      if (hexIndexLength > 8) {
+        hexIndexLength = 8;
+      }
+      strncpy(currentHexIndex, filename, hexIndexLength);
+      currentHexIndex[hexIndexLength] = '\0';
 
-        sscanf(entry->d_name, "lok %s", currentHexId);
-        currentHexId[strlen(currentHexId) - 4] = '\0';
-        sscanf(currentHexId, "%lx", &currentChunkId);
-
-        if (currentChunkId > *maxChunkId) {
-            *maxChunkId = currentChunkId;
-        }
+      if (sscanf(currentHexIndex, "%lx", &currentChunkIndex) != 1) {
+        continue;
+      }
+      if (currentChunkIndex > *maxChunkIndex) {
+          *maxChunkIndex = currentChunkIndex;
+      }
     }
-
-    closedir(dir);
+    
+    closedir(sessionDirectory);
 #endif
 }
 

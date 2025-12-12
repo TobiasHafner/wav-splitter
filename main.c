@@ -20,7 +20,7 @@
 int main(const int argc, char *argv[]) {
     // check for valid input arguments
     if (argc != 2) {
-        printf("Usage: %s <session_path>");
+        printf("Usage: wav-splitter <session_path>\n");
         exit(1);
     }
 
@@ -33,20 +33,24 @@ int main(const int argc, char *argv[]) {
         *separator_p = '\0';
     }
 
-    // create ouput folder
+    // find highest chunk index
+    uint64_t maxChunkIndex = 0;
+    _find_max_chunk_index(&maxChunkIndex, sessionPath_p);
+    if (maxChunkIndex == 0) {
+      fprintf(stderr, "ERROR: No input files found\n");
+      exit(1);
+    }
+    
+    // create output directory
     char *outputPath_p = malloc(strlen(sessionPath_p) + 7);
     if (outputPath_p == NULL) {
         fprintf(stderr, "ERROR: Memory allocation failed\n");
         exit(1);
     }
-    sprintf(outputPath_p, "%s%c%s%c\0", sessionPath_p, PATH_SEPARATOR, "out", PATH_SEPARATOR);
+    sprintf(outputPath_p, "%s%c%s%c", sessionPath_p, PATH_SEPARATOR, "out", PATH_SEPARATOR);
     _create_output_folder(outputPath_p);
 
-    // find highest chunk index
-    uint64_t maxChunkIndex = 0;
-    _find_max_chunk_index(&maxChunkIndex, sessionPath_p);
-
-    // explode each of the individual chunks into individual channels adn append to one file per channel
+    // explode each of the individual chunks into individual channels and append to one file per channel
     WavHeader inputHeader;
 
     FILE **outputFiles_pp = NULL;
@@ -60,7 +64,7 @@ int main(const int argc, char *argv[]) {
     for (uint64_t chunkIndex = 1; chunkIndex <= maxChunkIndex; chunkIndex++) {
         // build file path
         char inputFilePath[MAX_PATH_LENGTH];
-        sprintf(inputFilePath, "%s%c%08llX.WAV", sessionPath_p, PATH_SEPARATOR, chunkIndex);
+        sprintf(inputFilePath, "%s%c%08lX.WAV", sessionPath_p, PATH_SEPARATOR, chunkIndex);
         inputFilePath[MAX_PATH_LENGTH - 1] = '\0'; // we don't expect paths to be that long
 
         printf("Processing input file: %s\n", inputFilePath);
