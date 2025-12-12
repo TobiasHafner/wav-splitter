@@ -31,16 +31,7 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "Determined version: $VERSION"
 
-      # 3. Create tag if missing (for GitHub Release)
-      - name: Create tag if missing
-        if: startsWith(github.ref, 'refs/heads/releases/')
-        run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-          git tag -f $VERSION
-          git push origin $VERSION --force
-
-      # 4. Setup build tools
+      # 3. Setup build tools
       - name: Setup CMake
         uses: lukka/get-cmake@v4.2.1
         with:
@@ -54,7 +45,7 @@ jobs:
             choco install ninja
           fi
 
-      # 5. Configure and build
+      # 4. Configure and build
       - name: Build with CMake + Ninja
         run: |
           mkdir -p build
@@ -62,7 +53,7 @@ jobs:
           cmake -G Ninja ..
           ninja
 
-      # 6. Package Linux binaries (.tar.gz + .deb)
+      # 5. Package Linux binaries (.tar.gz + .deb)
       - name: Package Linux
         if: ${{ runner.os == 'Linux' }}
         run: |
@@ -83,7 +74,14 @@ jobs:
                 dpkg-deb --build $PKG_DIR
                 mv ${PKG_DIR}.deb wav-splitter-linux-${VERSION}.deb
 
-      # 7. Package Windows binaries (.zip)
+      # 6. Package Windows binaries (.zip)
+      - name: Package Windows
+        if: ${{ runner.os == 'Windows' }}
+        run: |
+          cd build
+          powershell Compress-Archive -Path * -DestinationPath wav-splitter-windows-${VERSION}.zip
+      
+      # 7. Upload Assets
       - name: Upload Linux assets
         if: ${{ runner.os == 'Linux' }}
         uses: softprops/action-gh-release@v1
