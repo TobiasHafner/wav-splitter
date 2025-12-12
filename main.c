@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
+#include <inttypes.h>
 #include <string.h>
 
 #include "wav-header.h"
@@ -64,8 +65,8 @@ int main(const int argc, char *argv[]) {
     for (uint64_t chunkIndex = 1; chunkIndex <= maxChunkIndex; chunkIndex++) {
         // build file path
         char inputFilePath[MAX_PATH_LENGTH];
-        sprintf(inputFilePath, "%s%c%08lX.WAV", sessionPath_p, PATH_SEPARATOR, chunkIndex);
-        inputFilePath[MAX_PATH_LENGTH - 1] = '\0'; // we don't expect paths to be that long
+        sprintf(inputFilePath, "%s%c%08" PRIX64 ".WAV", sessionPath_p, PATH_SEPARATOR, chunkIndex);
+        inputFilePath[MAX_PATH_LENGTH - 1] = '\0';
 
         printf("Processing input file: %s\n", inputFilePath);
 
