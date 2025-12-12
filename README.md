@@ -1,5 +1,5 @@
 # wav-splitter
-**wav-splitter** is a command-line tool that splits multichannel WAV files as known from **Midas M32** or **Behringer X32** multitrack recordings into individual mono tracks.
+wav-splitter is a command-line tool that splits multichannel WAV files as known from Midas M32 or Behringer X32 multitrack recordings into individual mono tracks.
 
 ## Features
 - Split multichannel WAV files into separate mono tracks.
@@ -18,7 +18,7 @@ The session directory contains audio files representing chunks of an input seque
 The tool will create an output directory called `out` inside the specified session directory. Each channel of the multitrack WAV files will be saved as a separate mono WAV file. The Multichannel WAV files from the session are automatically merged per channel, resulting in one WAV file per channel.
 
 ## Build Instructions (Linux)
-This section explains how to build the **wav-splitter** tool from source on Linux (Debian 12+), using CMake and Ninja.
+This section explains how to build the wav-splitter tool from source on Linux (Debian 12+), using CMake and Ninja.
 
 ### 1. Install dependencies
 
@@ -69,14 +69,33 @@ ninja
 ```
 
 ## Build Instructions (Windows)
-This section explains how to build the **wav-splitter** tool from source on Windows, using CMake and Ninja.
+This section explains how to build the wav-splitter tool from source on Windows, using CMake and Ninja.
 
 ### 1. Install dependencies
+To be able to build the wav-splitter tool under Windows the following dependencies are required:
 
-Make sure you have a C compiler, CMake, and Ninja installed:
-- [Visual Studio 2022](https://visualstudio.microsoft.com/) with the "Desktop development with C++" workload (needed for compiler and tools).
-- [CMake](https://cmake.org/download/)
-- [Ninja](https://ninja-build.org/)
+#### 1a. Install CMake
+For this step an [Installer for CMake](https://cmake.org/download/) is available from the official website. The installer will guide through the installation process.
+
+#### 1b. Install Ninja
+Installing ninja is a bit more complicated. The process starts with a download of the [binary release](https://github.com/ninja-build/ninja/releases) from the official repository.
+
+The `.zip` archive downloaded will contain the `ninja.exe`. This file should be placed in a dedicated directory for later use. This guide will assume `C:/Tools/ninja/ninja.exe`.
+
+To make the ninja.exe accessible from PowerShell the `ninja` directory from the previous step must be added to the system variable `Path` as shown below. This requires a PowerShell instance run as Administrator.
+
+```powershell
+setx PATH "$($env:PATH);C:\Tools\ninja" /M
+```
+
+Now the PowerShell instance can be closed and a new one reopened under User privileges. Running the command below should return the installed version of ninja.
+
+```powershell
+ninja --version
+```
+
+#### 1c. Installing a C Compiler
+Windows does not come with a C Compiler preinstalled. We recommend the use of `mingw-w64`. It is most easily installed using the [Easy MinGW Installer](https://github.com/ehsan18t/easy-mingw-installer/releases).
 
 ### 2. Clone the repository
 Using PowerShell or Command Prompt.
