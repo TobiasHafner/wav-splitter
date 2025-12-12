@@ -32,7 +32,7 @@ sudo apt install build-essential cmake ninja-build
 ### 2. Clone the repository
 
 ```bash
-git clone https://github.com/TobiasHafner/wav-splitter wav-splitter
+git clone git@github.com:TobiasHafner/wav-splitter.git wav-splitter
 cd wav-splitter
 ```
 
@@ -100,7 +100,7 @@ Windows does not come with a C Compiler preinstalled. We recommend the use of `m
 ### 2. Clone the repository
 Using PowerShell or Command Prompt.
 ```powershell
-git clone https://github.com/TobiasHafner/wav-splitter wav-splitter
+git clone git@github.com:TobiasHafner/wav-splitter.git wav-splitter
 cd wav-splitter
 ```
 
