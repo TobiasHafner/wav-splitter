@@ -3,7 +3,7 @@
 
 ## Features
 - Split multichannel WAV files into separate mono tracks.
-- Automatically merges session files to create one WAV file per channel.
+- Automatically merges sequential input files to create one WAV file per channel.
 - Creates an organized output directory for all extracted tracks.
 
 ## Usage
@@ -11,7 +11,9 @@
 wav-splitter <session_path>
 ```
 
-- <session_path>: Path to the directory containing your multitrack WAV session files.
+- <session_path>: Path to the directory containing your multitrack WAV files.
+
+The session directory contains audio files representing chunks of an input sequence. Each file is named using an eight digit uppercase hexadecimal string that indicates its order in the input sequence. The first file is thus called `00000001.WAV`, the second one `00000002.WAV` while the last one might be `00000A3F.wav`.
 
 The tool will create an output directory called `out` inside the specified session directory. Each channel of the multitrack WAV files will be saved as a separate mono WAV file. The Multichannel WAV files from the session are automatically merged per channel, resulting in one WAV file per channel.
 
