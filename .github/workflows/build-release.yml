@@ -84,20 +84,21 @@ jobs:
                 mv ${PKG_DIR}.deb wav-splitter-linux-${VERSION}.deb
 
       # 7. Package Windows binaries (.zip)
-      - name: Package Windows
-        if: ${{ runner.os == 'Windows' }}
-        run: |
-          cd build
-          powershell Compress-Archive -Path * -DestinationPath wav-splitter-windows-${VERSION}.zip
-
-      # 8. Upload release assets
-      - name: Upload Release Assets
+      - name: Upload Linux assets
+        if: ${{ runner.os == 'Linux' }}
         uses: softprops/action-gh-release@v1
         with:
           files: |
             build/wav-splitter-linux-${VERSION}.tar.gz
             build/wav-splitter-linux-${VERSION}.deb
-            build/wav-splitter-windows-${VERSION}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Windows assets
+        if: ${{ runner.os == 'Windows' }}
+        uses: softprops/action-gh-release@v1
+        with:
+          files: build/wav-splitter-windows-${VERSION}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
