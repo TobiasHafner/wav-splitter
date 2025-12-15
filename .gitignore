@@ -102,6 +102,9 @@ dkms.conf
 cmake-build-*/
 build
 
+# Only Office
+.~*/
+
 # Mongo Explorer plugin
 .idea/**/mongoSettings.xml
 
