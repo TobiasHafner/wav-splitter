@@ -105,6 +105,9 @@ build
 # Only Office
 .~*/
 
+# Distribution
+dist/
+
 # Mongo Explorer plugin
 .idea/**/mongoSettings.xml
 
