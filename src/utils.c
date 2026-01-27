@@ -15,7 +15,7 @@
 #define PATH_SEPARATOR '/'
 #endif
 
-#include "processing-utils.h"
+#include "utils.h"
 
 void _cleanup(FILE ***outputFiles, const uint16_t count, uint32_t **bytesWritten) {
     if (outputFiles) {
@@ -110,7 +110,7 @@ void _find_max_chunk_index(uint64_t *maxChunkIndex, const char *sessionPath) {
 }
 
 void _init_output_files(FILE *inputFile, FILE ***outputFiles, const WavHeader *inputHeader, uint32_t **dataWritten,
-                        char *outputPath) {
+                        const char *outputPath) {
     // Allocate arrays for files and bytes written
     *outputFiles = malloc(inputHeader->num_channels * sizeof(FILE *));
     *dataWritten = calloc(inputHeader->num_channels, sizeof(uint32_t));
@@ -136,7 +136,7 @@ void _init_output_files(FILE *inputFile, FILE ***outputFiles, const WavHeader *i
         if (!(*outputFiles)[i]) {
             fprintf(stderr, "Failed to open output file %s\n", outputFileName);
             fclose(inputFile);
-            _cleanup(outputFiles, i, dataWritten); // Clean up only the opened files so far
+            _cleanup(outputFiles, i, dataWritten);
             exit(1);
         }
 

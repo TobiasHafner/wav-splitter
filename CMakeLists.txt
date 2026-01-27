@@ -7,7 +7,8 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 add_executable(wav-splitter
     src/main.c
     src/wav-header.c
-    src/processing-utils.c
+    src/utils.c
+    src/processing.c
 )
 
 if (MSVC)
