@@ -8,10 +8,11 @@ wav-splitter is a command-line tool that splits multichannel WAV files as known 
 
 ## Usage
 ```bash
-wav-splitter <session_path>
+wav-splitter [-m buffer_size_mb] <session_path>
 ```
 
-- <session_path>: Path to the directory containing your multitrack WAV files.
+- `-m buffer_size_mb`: Optional total buffer size in megabytes (default: 4096 MB). Larger buffer sizes generally improve speed.
+- `<session_path>`: Path to the directory containing your multitrack WAV files.
 
 The session directory contains audio files representing chunks of an input sequence. Each file is named using an eight digit uppercase hexadecimal string that indicates its order in the input sequence. The first file is thus called `00000001.WAV`, the second one `00000002.WAV` while the last one might be `00000A3F.wav`.
 
