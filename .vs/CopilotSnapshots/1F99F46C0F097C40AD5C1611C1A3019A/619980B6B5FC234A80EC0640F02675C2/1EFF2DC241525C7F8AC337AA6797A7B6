@@ -1,4 +1,4 @@
-#ifndef PROCESSING_H
+﻿#ifndef PROCESSING_H
 #define PROCESSING_H
 
 #include <stdint.h>
@@ -40,8 +40,8 @@ void initialize_buffers(const WavHeader *inputHeader, size_t totalBufferSizeMB,
  * @return Opened input file handle (caller must close after processing)
  */
 FILE* read_chunk_header(uint64_t chunkIndex, const char *sessionPath_p, 
-                        WavHeader *inputHeader, FILE ***outputFiles_pp,
-                        uint64_t **bytesWritten_p, const char *outputPath_p);
+                        WavHeader *inputHeader, FILE ***outputFiles_pp, 
+                        uint32_t **bytesWritten_p, const char *outputPath_p);
 
 /**
  * Extract audio data from current chunk and distribute to channel buffers

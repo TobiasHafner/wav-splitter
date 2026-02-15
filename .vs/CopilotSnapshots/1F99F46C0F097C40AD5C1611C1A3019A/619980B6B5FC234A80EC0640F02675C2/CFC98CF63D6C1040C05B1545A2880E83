@@ -1,4 +1,4 @@
-#include <stdbool.h>
+﻿#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -67,7 +67,7 @@ int main(const int argc, char *argv[]) {
     // prepare processing state
     WavHeader inputHeader;
     FILE **outputFiles_pp = NULL;
-    uint64_t *bytesWritten_p = NULL;
+    uint32_t *bytesWritten_p = NULL;
     uint8_t **writeBuffers_pp = NULL;
     size_t *bufferFillBytes_p = NULL;
     size_t bufferSizeBytes = 0;

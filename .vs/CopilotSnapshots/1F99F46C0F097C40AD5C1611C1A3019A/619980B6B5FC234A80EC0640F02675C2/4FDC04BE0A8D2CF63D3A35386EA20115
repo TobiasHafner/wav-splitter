@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file utils.h
  * @brief Utility functions for processing multi-channel WAV files
  *
@@ -27,7 +27,7 @@
  * @param count Number of channels (output files) to clean up
  * @param bytesWritten Pointer to array tracking bytes written per channel to free
  */
-void _cleanup(FILE ***outputFiles, uint16_t count, uint64_t **bytesWritten);
+void _cleanup(FILE ***outputFiles, uint16_t count, uint32_t **bytesWritten);
 
 /**
  * Create the output folder for processed WAV files
@@ -65,7 +65,7 @@ void _find_max_chunk_index(uint64_t *maxChunkIndex, const char *sessionPath);
  * @param outputPath Path to the output directory where channel files will be created
  */
 void _init_output_files(FILE *inputFile, FILE ***outputFiles, const WavHeader *inputHeader, 
-                        uint64_t **dataWritten, const char *outputPath);
+                        uint32_t **dataWritten, const char *outputPath);
 
 /**
  * Rewrite WAV headers with correct file sizes
@@ -78,6 +78,6 @@ void _init_output_files(FILE *inputFile, FILE ***outputFiles, const WavHeader *i
  * @param dataWritten Pointer to array containing actual bytes written per channel
  * @param outputFiles Pointer to array of output file handles to update
  */
-void _rewrite_headers(const WavHeader *inputHeader, uint64_t **dataWritten, FILE ***outputFiles);
+void _rewrite_headers(const WavHeader *inputHeader, uint32_t **dataWritten, FILE ***outputFiles);
 
 #endif // PROCESSING_UTILS_H
