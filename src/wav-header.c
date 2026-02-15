@@ -143,22 +143,24 @@ int create_output_files(const WavHeader *inputHeader_p, const char *basePath_p, 
         return -1;
     }
 
-    for (int i = 0; i < inputHeader_p->num_channels; i++) {
+    for (int currentChannel = 0; currentChannel < inputHeader_p->num_channels; currentChannel++) {
         char outputFileName[260];
-        snprintf(outputFileName, sizeof(outputFileName), "%sch_%d.wav", basePath_p, i + 1);
+        snprintf(outputFileName, sizeof(outputFileName), "%sch_%d.wav", basePath_p, currentChannel + 1);
 
-        (*outputFiles_ppp)[i] = fopen(outputFileName, "wb");
+        (*outputFiles_ppp)[currentChannel] = fopen(outputFileName, "wb");
 
-        if (!(*outputFiles_ppp)[i]) {
-            for (int j = 0; j < i; j++) {
-                fclose((*outputFiles_ppp)[j]);
+        if (!(*outputFiles_ppp)[currentChannel]) {
+            for (int currentFile = 0; currentFile < currentChannel; currentFile++) {
+                fclose((*outputFiles_ppp)[currentFile]);
             }
             free(*outputFiles_ppp);
             return -1;
         }
 
-        if (write_header((*outputFiles_ppp)[i], inputHeader_p) == -1) {
-            for (int j = 0; j <= i; j++) fclose((*outputFiles_ppp)[j]);
+        if (write_header((*outputFiles_ppp)[currentChannel], inputHeader_p) == -1) {
+            for (int currentFile = 0; currentFile <= currentChannel; currentFile++) {
+                fclose((*outputFiles_ppp)[currentFile]);
+            }
             free(outputFiles_ppp);
             return -1;
         }

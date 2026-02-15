@@ -1,4 +1,4 @@
-#include <stdio.h>
+﻿#include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
@@ -129,7 +129,7 @@ void _init_output_files(FILE *inputFile_p, FILE ***outputFiles_pp, const WavHead
         exit(1);
     }
 
-    WavHeader outHeader = *inputHeader_p;
+    WavHeader outHeader = *inputHeader;
     outHeader.num_channels = 1;
     outHeader.byte_rate = outHeader.sample_rate * outHeader.bits_per_sample / 8;
     outHeader.block_align = outHeader.bits_per_sample / 8;
@@ -157,18 +157,18 @@ void _init_output_files(FILE *inputFile_p, FILE ***outputFiles_pp, const WavHead
     }
 }
 
-void _rewrite_headers(const WavHeader *inputHeader_p, size_t **bytesWritten_pp, FILE ***outputFiles_pp) {
-    for (int currentChannel = 0; currentChannel < inputHeader_p->num_channels; currentChannel++) {
-        fseek((*outputFiles_pp)[currentChannel], 0, SEEK_SET);
-        WavHeader finalHeader = *inputHeader_p;
+void _rewrite_headers(const WavHeader *inputHeader, uint64_t **dataWritten, FILE ***outputFiles) {
+    for (int i = 0; i < inputHeader->num_channels; i++) {
+        fseek((*outputFiles)[i], 0, SEEK_SET);
+        WavHeader finalHeader = *inputHeader;
         finalHeader.num_channels = 1;
         finalHeader.byte_rate = finalHeader.sample_rate * finalHeader.bits_per_sample / 8;
         finalHeader.block_align = finalHeader.bits_per_sample / 8;
-        finalHeader.data_bytes = (uint32_t)(*bytesWritten_pp)[currentChannel]; // cast to 32-bit for WAV header
+        finalHeader.data_bytes = (uint32_t)(*dataWritten)[i]; // TODO TH: investigate type cast. Why 32bit data size is sufficient for each channel file?
         finalHeader.wav_size = 36 + finalHeader.data_bytes;
 
-        if (write_header((*outputFiles_pp)[currentChannel], &finalHeader) == -1) {
-            fprintf(stderr, "Failed to rewrite header with correct sizes for output file %d.\n", currentChannel + 1);
+        if (write_header((*outputFiles)[i], &finalHeader) == -1) {
+            fprintf(stderr, "Failed to rewrite header with correct sizes for output file %d.\n", i + 1);
         }
     }
 }
