@@ -1,4 +1,4 @@
-#include <stdio.h>
+﻿#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
@@ -35,12 +35,13 @@ void initialize_session(const char *sessionPath_p, uint64_t *maxChunkIndex_p, ch
 }
 
 
-void initialize_buffers(const WavHeader *inputHeader_p, size_t totalBufferSizeGiB, 
+void initialize_buffers(const WavHeader *inputHeader_p, size_t totalBufferSizeMB, 
                        uint8_t ***writeBuffers_pp, size_t **bufferFillBytes_pp, 
                        size_t *bufferSizeBytes_p) {
-    // calculate buffer size per channel (convert GiB to bytes)
-    *bufferSizeBytes_p = (totalBufferSizeGiB * 1024 * 1024 * 1024) / inputHeader_p->num_channels;
-    
+    // calculate buffer size per channel
+    *bufferSizeBytes_p = (totalBufferSizeMB * 1024 * 1024) / inputHeader_p->num_channels;
+    printf("Buffer size per channel: %.2f MB\n", *bufferSizeBytes_p / (1024.0 * 1024.0));
+
     // allocate buffer arrays
     *writeBuffers_pp = malloc(inputHeader_p->num_channels * sizeof(uint8_t *));
     *bufferFillBytes_pp = malloc(inputHeader_p->num_channels * sizeof(size_t));
@@ -64,7 +65,7 @@ void initialize_buffers(const WavHeader *inputHeader_p, size_t totalBufferSizeGi
 
 
 FILE* read_chunk_header(uint64_t chunkIndex, const char *sessionPath_p, 
-                        WavHeader *inputHeader_p, FILE ***outputFiles_pp, 
+                        WavHeader *inputHeader, FILE ***outputFiles_pp, 
                         size_t **bytesWritten_pp, const char *outputPath_p) {
     // build file path
     char inputFilePath[MAX_PATH_LENGTH];
@@ -77,35 +78,35 @@ FILE* read_chunk_header(uint64_t chunkIndex, const char *sessionPath_p,
     FILE *inputFile_p = fopen(inputFilePath, "rb");
     if (!inputFile_p) {
         fprintf(stderr, "ERROR: Failed to open input file\n");
-        _cleanup(outputFiles_pp, inputHeader_p->num_channels, (size_t **)bytesWritten_pp);
+        _cleanup(outputFiles_pp, inputHeader->num_channels, (uint64_t **)bytesWritten_pp);
         exit(-1);
     }
 
     // read header
-    if (read_header(inputFile_p, inputHeader_p) != 0) {
+    if (read_header(inputFile_p, inputHeader) != 0) {
         fprintf(stderr, "ERROR: Failed to read WAV header\n");
         fclose(inputFile_p);
-        _cleanup(outputFiles_pp, inputHeader_p->num_channels, (size_t **)bytesWritten_pp);
+        _cleanup(outputFiles_pp, inputHeader->num_channels, (uint64_t **)bytesWritten_pp);
         exit(1);
     }
 
     // initialize output files on first chunk
     if (chunkIndex == 1) {
-        _init_output_files(inputFile_p, outputFiles_pp, inputHeader_p, bytesWritten_pp, outputPath_p);
-        printf("Created output files for %d channels\n", inputHeader_p->num_channels);
+        _init_output_files(inputFile_p, outputFiles_pp, inputHeader, (size_t **)bytesWritten_pp, outputPath_p);
+        printf("Created output files for %d channels\n", inputHeader->num_channels);
     }
 
     return inputFile_p;
 }
 
 
-void extract_audio_from_chunk(FILE *inputFile_p, const WavHeader *inputHeader_p,
+void extract_audio_from_chunk(FILE *inputFile_p, const WavHeader *inputHeader,
                              uint8_t **writeBuffers_pp, size_t *bufferFillBytes_p,
                              size_t bufferSizeBytes, FILE **outputFiles_pp,
                              size_t *bytesWritten_p) {
     // choose a read block size aimed to reduce syscall overhead
-    const uint16_t bytesPerSample = inputHeader_p->bits_per_sample / 8;
-    const size_t blockAlign = inputHeader_p->block_align;
+    const uint16_t bytesPerSample = inputHeader->bits_per_sample / 8;
+    const size_t blockAlign = inputHeader->block_align;
 
     // frames per read must be at least 1 and such that read size is multiple of blockAlign
     size_t framesPerRead = (READ_BUFFER_SIZE_MB  * 1024 * 1024) / blockAlign;
@@ -130,7 +131,7 @@ void extract_audio_from_chunk(FILE *inputFile_p, const WavHeader *inputHeader_p,
         // for each frame, distribute samples to channel buffers
         for (size_t currentFrame = 0; currentFrame < framesRead; currentFrame++) {
             uint8_t *frameBase = readBuffer_p + currentFrame * blockAlign;
-            for (int currentChannel = 0; currentChannel < inputHeader_p->num_channels; currentChannel++) {
+            for (int currentChannel = 0; currentChannel < inputHeader->num_channels; currentChannel++) {
                 uint8_t *src = frameBase + currentChannel * bytesPerSample;
                 uint8_t *dst = writeBuffers_pp[currentChannel] + bufferFillBytes_p[currentChannel];
                 memcpy(dst, src, bytesPerSample);
@@ -156,20 +157,20 @@ void extract_audio_from_chunk(FILE *inputFile_p, const WavHeader *inputHeader_p,
 }
 
 
-void flush_remaining_buffers(const WavHeader *inputHeader_p, uint8_t **writeBuffers_pp,
+void flush_remaining_buffers(const WavHeader *inputHeader, uint8_t **writeBuffers_pp,
                             size_t *bufferFillBytes_p, FILE **outputFiles_pp,
                             size_t *bytesWritten_p) {
-    for (int currentChannel = 0; currentChannel < inputHeader_p->num_channels; currentChannel++) {
-        if (bufferFillBytes_p[currentChannel] > 0) {
-            size_t toWrite = bufferFillBytes_p[currentChannel];
-            size_t written = fwrite(writeBuffers_pp[currentChannel], 1, toWrite, outputFiles_pp[currentChannel]);
+    for (int i = 0; i < inputHeader->num_channels; i++) {
+        if (bufferFillBytes_p[i] > 0) {
+            size_t toWrite = bufferFillBytes_p[i];
+            size_t written = fwrite(writeBuffers_pp[i], 1, toWrite, outputFiles_pp[i]);
             if (written != toWrite) {
-                fprintf(stderr, "ERROR: Writing remaining data to channel %d\n", currentChannel + 1);
+                fprintf(stderr, "ERROR: Writing remaining data to channel %d\n", i + 1);
                 exit(1);
             }
-            bytesWritten_p[currentChannel] += toWrite;
+            bytesWritten_p[i] += toWrite;
         }
-        free(writeBuffers_pp[currentChannel]);
+        free(writeBuffers_pp[i]);
     }
 
     free(writeBuffers_pp);
@@ -177,11 +178,11 @@ void flush_remaining_buffers(const WavHeader *inputHeader_p, uint8_t **writeBuff
 }
 
 
-void finalize_output_files(const WavHeader *inputHeader_p, size_t **bytesWritten_pp,
+void finalize_output_files(const WavHeader *inputHeader, size_t **bytesWritten_pp,
                           FILE ***outputFiles_pp) {
     if (*outputFiles_pp) {
-        _rewrite_headers(inputHeader_p, bytesWritten_pp, outputFiles_pp);
-        _cleanup(outputFiles_pp, inputHeader_p->num_channels, bytesWritten_pp);
+        _rewrite_headers(inputHeader, (uint64_t **)bytesWritten_pp, outputFiles_pp);
+        _cleanup(outputFiles_pp, inputHeader->num_channels, (uint64_t **)bytesWritten_pp);
     }
     printf("Header rewriting completed and files closed.\n");
 }

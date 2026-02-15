@@ -1,7 +1,6 @@
-#include <stdio.h>
+﻿#include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <inttypes.h>
 #include <string.h>
 
 #define MAX_PATH_LENGTH 250
@@ -76,7 +75,7 @@ void _find_max_chunk_index(uint64_t *maxChunkIndex, const char *sessionPath) {
         }
         strncpy(currentHexIndex, currentEntry.cFileName, strlen(currentEntry.cFileName) - 4);
         currentHexIndex[8] = '\0';
-        if (sscanf(currentHexIndex, "%" SCNx64, &currentChunkIndex) != 1) {
+        if (sscanf(currentHexIndex, "%lx", &currentChunkIndex) != 1) {
             continue;
         }
         if (currentChunkIndex > *maxChunkIndex) {
@@ -106,7 +105,7 @@ void _find_max_chunk_index(uint64_t *maxChunkIndex, const char *sessionPath) {
       strncpy(currentHexIndex, filename, hexIndexLength);
       currentHexIndex[hexIndexLength] = '\0';
 
-      if (sscanf(currentHexIndex, "%" SCNx64, &currentChunkIndex) != 1) {
+      if (sscanf(currentHexIndex, "%lx", &currentChunkIndex) != 1) {
         continue;
       }
       if (currentChunkIndex > *maxChunkIndex) {

@@ -1,4 +1,4 @@
-#include <stdbool.h>
+﻿#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -19,18 +19,18 @@
  * @param totalBufferSizeGiB Pointer to store the buffer size in GiB
  */
 static void parse_arguments(int argc, char *argv[], const char **sessionPath_p, size_t *totalBufferSizeGiB) {
-    *totalBufferSizeGiB = DEFAULT_BUFFER_SIZE_GiB;
+    *totalBufferSizeGiB = DEFAULT_BUFFER_SIZE_MB;
     
     // check for valid input arguments
     if (argc < 2 || argc > 4) {
-        printf("Usage: wav-splitter [-b buffer_size_gib] <session_path>\n");
-        printf("  -b buffer_size_GiB : Optional total buffer size in GiB (default: %d)\n", DEFAULT_BUFFER_SIZE_GiB);
+        printf("Usage: wav-splitter [-m buffer_size_gib] <session_path>\n");
+        printf("  -m buffer_size_GiB : Optional total buffer size in GiB (default: %d)\n", DEFAULT_BUFFER_SIZE_GiB);
         exit(1);
     }
     
     // check for -m flag
     int argIndex = 1;
-    if (argc >= 3 && strcmp(argv[argIndex], "-b") == 0) {
+    if (argc >= 3 && strcmp(argv[argIndex], "-m") == 0) {
         char *endptr;
         long bufferSize = strtol(argv[argIndex + 1], &endptr, 10);
         
@@ -41,7 +41,7 @@ static void parse_arguments(int argc, char *argv[], const char **sessionPath_p, 
         
         *totalBufferSizeGiB = (size_t)bufferSize;
         argIndex += 2;
-        printf("Using buffer size: %zu GiB\n", *totalBufferSizeGiB);
+        printf("Using buffer size: %zu MB\n", *totalBufferSizeGiB);
     }
     
     // get session path
@@ -51,6 +51,7 @@ static void parse_arguments(int argc, char *argv[], const char **sessionPath_p, 
     }
     *sessionPath_p = argv[argIndex];
 }
+
 
 int main(const int argc, char *argv[]) {
     // parse command line arguments

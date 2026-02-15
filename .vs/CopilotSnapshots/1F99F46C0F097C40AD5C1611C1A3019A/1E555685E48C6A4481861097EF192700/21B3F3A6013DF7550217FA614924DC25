@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file utils.h
  * @brief Utility functions for processing multi-channel WAV files
  *
@@ -23,11 +23,11 @@
  * Closes all open file handles in the output files array and frees
  * the memory allocated for the files array and bytes written tracking array.
  *
- * @param outputFiles_pp Pointer to array of output file handles to close and free
+ * @param outputFiles Pointer to array of output file handles to close and free
  * @param count Number of channels (output files) to clean up
- * @param bytesWritten_pp Pointer to array tracking bytes written per channel to free
+ * @param bytesWritten Pointer to array tracking bytes written per channel to free
  */
-void _cleanup(FILE ***outputFiles_pp, uint16_t count, size_t **bytesWritten_pp);
+void _cleanup(FILE ***outputFiles, uint16_t count, size_t **bytesWritten_pp);
 
 /**
  * Create the output folder for processed WAV files
@@ -46,10 +46,10 @@ void _create_output_folder(char *outputPath);
  * Scans the session directory for WAV files with hexadecimal naming (e.g., 00000001.WAV)
  * and determines the maximum chunk index. This is used to know how many chunks to process.
  *
- * @param maxChunkIndex_p Pointer to store the maximum chunk index found (0 if no files found)
- * @param sessionPath_p Path to the session directory to scan
+ * @param maxChunkIndex Pointer to store the maximum chunk index found (0 if no files found)
+ * @param sessionPath Path to the session directory to scan
  */
-void _find_max_chunk_index(uint64_t *maxChunkIndex_p, const char *sessionPath_p);
+void _find_max_chunk_index(uint64_t *maxChunkIndex, const char *sessionPath);
 
 /**
  * Initialize output files for each channel
@@ -58,14 +58,14 @@ void _find_max_chunk_index(uint64_t *maxChunkIndex_p, const char *sessionPath_p)
  * and initializes tracking arrays for file handles and bytes written. The headers will be
  * rewritten with correct sizes after all data has been written.
  *
- * @param inputFile_p Input file handle (used for error handling context)
- * @param outputFiles_pp Pointer to array of output file handles (allocated by this function)
- * @param inputHeader_p WAV header from input file containing format information
- * @param bytesWritten_pp Pointer to array tracking bytes written per channel (allocated by this function)
- * @param outputPath_p Path to the output directory where channel files will be created
+ * @param inputFile Input file handle (used for error handling context)
+ * @param outputFiles Pointer to array of output file handles (allocated by this function)
+ * @param inputHeader WAV header from input file containing format information
+ * @param dataWritten Pointer to array tracking bytes written per channel (allocated by this function)
+ * @param outputPath Path to the output directory where channel files will be created
  */
-void _init_output_files(FILE *inputFile_p, FILE ***outputFiles_pp, const WavHeader *inputHeader_p, 
-                        size_t **bytesWritten_pp, const char *outputPath_p);
+void _init_output_files(FILE *inputFile, FILE ***outputFiles, const WavHeader *inputHeader_p, 
+                        size_t **bytesWritten_pp, const char *outputPath);
 
 /**
  * Rewrite WAV headers with correct file sizes
@@ -74,10 +74,10 @@ void _init_output_files(FILE *inputFile_p, FILE ***outputFiles_pp, const WavHead
  * of each output file and rewrites the WAV header with the correct data_bytes and
  * wav_size fields based on the actual amount of data written.
  *
- * @param inputHeader_p Original input WAV header containing format information
- * @param bytesWritten_pp Pointer to array containing actual bytes written per channel
- * @param outputFiles_pp Pointer to array of output file handles to update
+ * @param inputHeader Original input WAV header containing format information
+ * @param dataWritten Pointer to array containing actual bytes written per channel
+ * @param outputFiles Pointer to array of output file handles to update
  */
-void _rewrite_headers(const WavHeader *inputHeader_p, size_t **bytesWritten_pp, FILE ***outputFiles_pp);
+void _rewrite_headers(const WavHeader *inputHeader, size_t **bytesWritten_pp, FILE ***outputFiles);
 
 #endif // PROCESSING_UTILS_H
